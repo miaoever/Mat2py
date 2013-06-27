@@ -15,7 +15,7 @@ TokenType = enum("FUNCTION", "IF", "ELSE", "END", "FOR",
                 "ID", "NUM",
                 "ASSIGN", "EQ","UNEQ" ,"LT", "PLUS", "MINUS",
                 "TIMES", "SEMI", "LPAREN", "RPAREN", "LBRACKET", "RBRACKET",
-                "GE", "LE", "DIV", "COL", "COMMA", "DOT","SQUTE"  ,"ERROR")
+                "GE", "LE", "DIV", "COL", "COMMA", "DOT","SQUOTE"  ,"ERROR")
 
 source =""          #source file
 pos = 0             #current position in current line
@@ -52,7 +52,7 @@ def getTokenType(c)
                 ']': TokenType.RBRACKET,
                 ',': TokenType.COMMA,
                 '.': TokenType.DOT,
-                "'": TokenType.SQUTE
+                "'": TokenType.SQUOTE
             }
     if c in token.keys():
         return result[c]
