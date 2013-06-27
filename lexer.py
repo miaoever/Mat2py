@@ -15,21 +15,21 @@ TokenType = enum("FUNCTION", "IF", "ELSE", "END", "FOR",
                 "ID", "NUM",
                 "ASSIGN", "EQ","UNEQ" ,"LT", "PLUS", "MINUS",
                 "TIMES", "SEMI", "LPAREN", "RPAREN", "LBRACKET", "RBRACKET",
-                "GE", "LE", "DIV", "COL", "COMMA", "DOT"  ,"ERROR")
+                "GE", "LE", "DIV", "COL", "COMMA", "DOT","SQUTE"  ,"ERROR")
 
-source =""         #source file
-pos = 0         #current position in current line
-curline = ""    #current line buffer
-currenToken = -1
-curstate = -1
+source =""          #source file
+pos = 0             #current position in current line
+curline = ""        #current line buffer
+currenToken = -1    #current TokenType
+curstate = -1       #current state
 
 def loadSource(filename):
-    source = open(filename, 'r');
+    source = open(filename, 'r')
 
 def getNextChar():
     if pos >= len(curline):
         curline = source.readline()
-        pos = 0;
+        pos = 0
         return curline[pos++]
     else: return curline[pos++]
 
@@ -51,7 +51,8 @@ def getTokenType(c)
                 '[': TokenType.LBRACKET,
                 ']': TokenType.RBRACKET,
                 ',': TokenType.COMMA,
-                '.': TokenType.DOT
+                '.': TokenType.DOT,
+                "'": TokenType.SQUTE
             }
     if c in token.keys():
         return result[c]
@@ -142,7 +143,7 @@ def getToken():
     curstate = State.START
 
     while (curState != State.DONE):
-        c = getNextChar();
+        c = getNextChar()
         save = True
 
         stateMachine = {
