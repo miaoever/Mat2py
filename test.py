@@ -7,7 +7,7 @@ def main():
     while True:
         tokenString,tokenType = token.getToken()
         if  tokenString:
-            print tokenString
+            print "<",tokenString,",",tokenType,">"
         else:
             break
 

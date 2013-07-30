@@ -160,6 +160,7 @@ class Token:
             self.currentToken = self.TokenType.EQ
         else:
             self.curstate = self.State.INASSIGN
+            self.currentToken = self.TokenType.ASSIGN
             self.ungetNextChar();
         self.curstate = self.State.DONE
 
@@ -306,4 +307,4 @@ class Token:
         if self.curstate == self.State.DONE:
             #self.tokenString += '\0'
             #print self.tokenString
-            return (self.tokenString, self.currentToken)
+            return (self.tokenString, self.TokenType.reverse_mapping[self.currentToken])
