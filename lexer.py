@@ -194,7 +194,7 @@ class Token:
             self.curstate = self.State.START
 
     def state_INNUM(self,c):
-        if not c.isdigit() and c != '.' and c != 'e' and c != '+' and c != '-':
+        if not c.isdigit() and c != '.' and c != 'e' and c != '-':
             self.ungetNextChar()
             self.save = False
             self.curstate = self.State.DONE
@@ -214,7 +214,6 @@ class Token:
         while LastNonEmptyChar == ' ':
             i += 1
             LastNonEmptyChar =  self.curline[self.pos - i]
-
         if not c.isdigit() or LastNonEmptyChar.isalpha() or LastNonEmptyChar.isdigit() or ( LastNonEmptyChar == "_"):
             self.ungetNextChar()
             self.save = False
