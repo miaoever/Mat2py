@@ -1,158 +1,264 @@
-import os
-import sys
 
-#enum type for python
-def enum(*sequential, **named):
-    enums = dict(zip(sequential, range(len(sequential))), **named)
-    return type('Enum', (), enums)
+class Token:
 
-#state list
-State = enum("START", "INASSIGN", "EQORASSIGN", "INEQ" ,"INLE" ,
-            "LTORLE", "INLT" ,"INLE","GTORGE" ,"INGT" ,"INGE",
-            "INUNEQ" , "INCOMMENT", "INNUM", "INID", "DONE")
-#token type list
-TokenType = enum("FUNCTION", "IF", "ELSE", "END", "FOR",
-                "ID", "NUM",
-                "ASSIGN", "EQ","UNEQ" ,"LT", "PLUS", "MINUS",
-                "TIMES", "SEMI", "LPAREN", "RPAREN", "LBRACKET", "RBRACKET",
-                "GE", "LE", "DIV", "COL", "COMMA", "DOT","SQUOTE"  ,"ERROR")
+    #enum type for python
+    def enum(*sequential, **named):
+        enums = dict(zip(sequential, range(len(sequential))), **named)
+        reverse = dict((value, key) for key, value in enums.iteritems())
+        enums['reverse_mapping'] = reverse
+        return type('Enum', (), enums)
 
-source =""          #source file
-pos = 0             #current position in current line
-curline = ""        #current line buffer
-currenToken = -1    #current TokenType
-curstate = -1       #current state
+    def __init__(self, path):
+        #state list
+        self.State = self.enum(
+                    "START",
+                    "EQORASSIGN",       #equal or assign
+                    "LTORLE",           #less than or less equal
+                    "GTORGE" ,
+                    "INUNEQ" ,
+                    "INCOMMENT",
+                    "INNUM",
+                    "INID",
+                    "INASSIGN",
+                    "QUOTEORSTR",       #just single quote or begin of string
+                    "DOTORNUM",         #just dot or a float number
+                    "STRING",
+                    "DONE")
 
-def loadSource(filename):
-    source = open(filename, 'r')
+        #token type list
+        self.TokenType = self.enum(
+                        "FUNCTION",
+                        "IF",
+                        "ELSE",
+                        "END",
+                        "FOR",
+                        "ID",
+                        "NUM",
+                        "POW",
+                        "ASSIGN",
+                        "EQ",
+                        "UNEQ" ,
+                        "LT",
+                        "PLUS",
+                        "MINUS",
+                        "TRANSPOSE",
+                        "TIMES",
+                        "SEMI",
+                        "LPAREN",
+                        "RPAREN",
+                        "LBRACKET",
+                        "RBRACKET",
+                        "GT",
+                        "GE",
+                        "LE",
+                        "DIV",
+                        "COL",
+                        "COMMA",
+                        "DOT",
+                        "STRING",
+                        "ERROR",
+                        "ENDFILE")
 
-def getNextChar():
-    if pos >= len(curline):
-        curline = source.readline()
-        pos = 0
-        return curline[pos++]
-    else: return curline[pos++]
+        self.path = path        #self.source file
+        self.pos = 0             #current self.position in current line
+        self.curline = ""        #current line buffer
+        self.currenToken = -1    #current self.TokenType
+        self.curstate = -1       #current state
+        self.tokenString = ""
+        self.loadSource(self.path)
 
-def ungetNextChar():
-    pos --
+    def loadSource(self,filename):
+        self.source = open(filename, 'r')
 
-def getTokenType(c)
-    token = {
-                #'=': TokenType.ASSIGN,
-                #'<': TokenType.LT,
-                #'>': TokenType.GT,
-                '+': TokenType.PLUS,
-                '-': TokenType.MINUS,
-                '*': TokenType.TIME,
-                '/': TokenType.DIV,
-                '(': TokenType.LPAREN,
-                ')': TokenType.RPAREN,
-                ';': TokenType.SEMI,
-                '[': TokenType.LBRACKET,
-                ']': TokenType.RBRACKET,
-                ',': TokenType.COMMA,
-                '.': TokenType.DOT,
-                "'": TokenType.SQUOTE
-            }
-    if c in token.keys():
-        return result[c]
-    else:
-        return TokenType.ERROR
+    def getNextChar(self):
+        if self.pos >= len(self.curline):
+            self.curline = self.source.readline()
+            if not self.curline:
+                return ""
+            self.pos = 0
+            self.pos += 1
+            return self.curline[self.pos - 1]
+        else:
+            self.pos += 1
+            return self.curline[self.pos - 1]
 
-def state_START(c):
-    save = True
-    if c.isdigit():
-        curstate = State.INNUM
-    elif c.isalpha():
-        curstate = State.INID
-    #elif c == '=':
-    #    curstate = State.INASSIGN
-    elif c == ' ' || c == '\t' || c == '\n' || c == '\r' :
-        save = False
-    elif c == "%":
-        save = False
-        curstate = State.INCOMMENT
-    elif c == "!":
-        save = True
-        curstate = State.INUNEQ
-    elif c == "=":
-        save = True
-        curstate = State.EQORASSIGN
-    elif c == "<":
-        save = True
-        curstate = State.LTORLE
-    elif c == ">":
-        save = True
-        curstate = State.GTORGE
-    else:
-        curstate = State.DONE
-        currentToken = getTokenType(c)
+    def ungetNextChar(self):
+        self.pos -= 1
 
-def state_EQORASSIGN(c):
-    if c == '='
-        currentToken = TokenType.EQ
-    else:
-        curstate = State.INASSIGN
-        ungetNextChar();
-    curstate = State.DONE
+    def lookbackChar(self):
+        return self.curline[self.pos - 2]
 
-def state_LTORLE(c):
-    if c == '=':
-        currentToken = TokenType.LE
-    else:
-        ungetNextChar()
-        currentToken = TokenType.LT
-    curstate = State.DONE
+    def getTokenType(self,c):
+        token = {
+                    #'=': self.TokenType.ASSIGN,
+                    #'<': self.TokenType.LT,
+                    #'>': self.TokenType.GT,
+                    #"'": self.TokenType.SQUOTE
+                    '.': self.TokenType.DOT,
+                    ',': self.TokenType.COMMA,
+                    '+': self.TokenType.PLUS,
+                    '-': self.TokenType.MINUS,
+                    '*': self.TokenType.TIMES,
+                    '/': self.TokenType.DIV,
+                    '(': self.TokenType.LPAREN,
+                    ')': self.TokenType.RPAREN,
+                    ';': self.TokenType.SEMI,
+                    '[': self.TokenType.LBRACKET,
+                    ']': self.TokenType.RBRACKET,
+                    '^': self.TokenType.POW
+                }
+        if c in token.keys():
+            return token[c]
+        else:
+            return self.TokenType.ERROR
 
-def state_GTORGE(c):
-    if c == '=':
-        currentToken = TokenType.GE
-    else:
-        ungetNextChar()
-        currentToken = TokenType.GT
-    curstate = State.DONE
+    def state_START(self,c):
+        self.save = True
+        if c.isdigit():
+            self.curstate = self.State.INNUM
+        elif c.isalpha():
+            self.curstate = self.State.INID
+        #elif c == '=':
+        #    self.curstate = self.State.INASSIGN
+        elif c == ' ' or  c == '\t' or c == '\n' or c == '\r' :
+            self.save = False
+        elif c == "%":
+            self.save = False
+            self.curstate = self.State.INCOMMENT
+        elif c == "!":
+            self.save = True
+            self.curstate = self.State.INUNEQ
+        elif c == "=":
+            self.save = True
+            self.curstate = self.State.EQORASSIGN
+        elif c == "<":
+            self.save = True
+            self.curstate = self.State.LTORLE
+        elif c == ">":
+            self.save = True
+            self.curstate = self.State.GTORGE
+        #elif c == "^":
+        #    self.save = True
+        #    self.curstate = self.State.POWER
+        elif c == "'":
+            self.save =True
+            self.curstate = self.State.QUOTEORSTR
+        else:
+            self.curstate = self.State.DONE
+            self.currentToken = self.getTokenType(c)
 
-def state_INUNEQ(c):
-    if c == '=':
-        currentToken = TokenType.UNEQ
-    else:
-        currentToken = TokenType.ERROR
-        save = False
-    curstate = State.DONE
+    def state_EQORASSIGN(self,c):
+        if c == '=':
+            self.currentToken = self.TokenType.EQ
+        else:
+            self.curstate = self.State.INASSIGN
+            self.ungetNextChar();
+        self.curstate = self.State.DONE
 
-def state_INCOMMENT(c):
-    save = False
-    if c == '\r' || c == '\n':
-        curstate = State.START
+    def state_LTORLE(self,c):
+        if c == '=':
+            self.currentToken = self.TokenType.LE
+        else:
+            self.ungetNextChar()
+            self.currentToken = self.TokenType.LT
+        self.curstate = self.State.DONE
 
-def state_INNUM(c):
-    if !c.isdigit():
-        ungetNextChar()
-        save = False
-        curstate = State.DONE
-        currentToken = TokenType.NUM
+    def state_GTORGE(self,c):
+        if c == '=':
+            self.currentToken = self.TokenType.GE
+        else:
+            self.ungetNextChar()
+            self.currentToken = self.TokenType.GT
+        self.curstate = self.State.DONE
 
-def state_INID(c):
-    if !c.isalpha():
-        ungetNextChar()
-        sava = False
-        currentToken = TokenType.ID
+    def state_INUNEQ(self,c):
+        if c == '=':
+            self.currentToken = self.TokenType.UNEQ
+        else:
+            self.currentToken = self.TokenType.ERROR
+            self.save = False
+        self.curstate = self.State.DONE
 
-def getToken():
-    tokenStringIndex = 0
-    curstate = State.START
+    def state_INCOMMENT(self,c):
+        self.save = False
+        if c == '\r' or c == '\n':
+            self.curstate = self.State.START
 
-    while (curState != State.DONE):
-        c = getNextChar()
-        save = True
+    def state_INNUM(self,c):
+        if not c.isdigit() and c != '.':
+            self.ungetNextChar()
+            self.save = False
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.NUM
 
-        stateMachine = {
-                        State.START: lambda x: state_START(x),
-                        State.INCOMMENT: lambda x: state_INCOMMENT(x),
-                        State.EQORASSIGN: lambda x: state_EQORASSIGN(x),
-                        State.LTORLE: lambda x: state_LTORLE(x),
-                        State.GTORGE: lambda x: state_GTORGE(x),
-                        State.INUNEQ: lambda x: state_INUNEQ(x),
-                        State.INNUM: lambda x: state_INNUM(x),
-                        State.INID: lambda x: state_INID(x)
-        }[curstate](c)
+    def state_INID(self,c):
+        if (not c.isalpha()) and (not c.isdigit()) and (c != '_'):
+            self.ungetNextChar()
+            self.save = False
+            self.currentToken = self.TokenType.ID
+            self.curstate = self.State.DONE
+
+    #def state_POWER(self,c):
+    #    if c.isdigit():
+    #        self.currentToken = self.TokenType.POWNUM
+    #        self.save = True
+    #    else:
+    #        self.ungetNextChar()
+    #        self.currentToken = self.TokenType.ERROR
+    #        self.save = False
+    #    self.curstate = self.State.DONE
+
+    def state_QUOTEORSTR(self,c):
+        self.ungetNextChar()
+        lookback = self.lookbackChar()
+        if lookback.isalpha():
+            self.currentToken = self.TokenType.TRANSPOSE
+            self.save = False
+            self.curstate = self.State.DONE
+        else:
+            self.save = False
+            self.curstate = self.State.STRING
+
+    def state_STRING(self,c):
+        if c == "'":
+            self.save = False
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.STRING
+        else:
+            self.save = True
+
+    def getToken(self):
+        self.tokenStringIndex = 0
+        self.tokenString = ''
+        self.curstate = self.State.START
+
+        while (self.curstate != self.State.DONE):
+            c = self.getNextChar()
+            if not c :
+                self.curstate = self.State.DONE
+                self.save = False
+                self.currentToken = self.TokenType.ENDFILE
+                self.tokenString = ""
+                break
+            self.save = True
+
+            stateMachine = {
+                            self.State.START: lambda x: self.state_START(x),
+                            self.State.INCOMMENT: lambda x: self.state_INCOMMENT(x),
+                            self.State.EQORASSIGN: lambda x: self.state_EQORASSIGN(x),
+                            self.State.LTORLE: lambda x: self.state_LTORLE(x),
+                            self.State.GTORGE: lambda x: self.state_GTORGE(x),
+                            self.State.INUNEQ: lambda x: self.state_INUNEQ(x),
+                            self.State.INNUM: lambda x: self.state_INNUM(x),
+                            self.State.INID: lambda x: self.state_INID(x),
+                            self.State.QUOTEORSTR: lambda x: self.state_QUOTEORSTR(x),
+                            self.State.STRING: lambda x: self.state_STRING(x),
+                            #self.State.POWER: lambda x: self.state_POWER(x),
+            }[self.curstate](c)
+            if self.save :
+                self.tokenString += c;
+
+        if self.curstate == self.State.DONE:
+            #self.tokenString += '\0'
+            #print self.tokenString
+            return (self.tokenString, self.currentToken)
