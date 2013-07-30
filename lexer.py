@@ -18,6 +18,8 @@ class Token:
                     "INUNEQ" ,
                     "INCOMMENT",
                     "INNUM",
+                    "INPLUS",
+                    "INMINUS",
                     "INID",
                     "INASSIGN",
                     "QUOTEORSTR",       #just single quote or begin of string
@@ -143,6 +145,12 @@ class Token:
         elif c == "'":
             self.save =True
             self.curstate = self.State.QUOTEORSTR
+        elif c == "+":
+            self.save = True
+            self.curstate = self.State.INPLUS
+        elif c == "-":
+            self.save = True
+            self.curstate = self.State.INMINUS
         else:
             self.curstate = self.State.DONE
             self.currentToken = self.getTokenType(c)
@@ -185,7 +193,7 @@ class Token:
             self.curstate = self.State.START
 
     def state_INNUM(self,c):
-        if not c.isdigit() and c != '.':
+        if not c.isdigit() and c != '.' and c != 'e' and c != '+' and c != '-':
             self.ungetNextChar()
             self.save = False
             self.curstate = self.State.DONE
@@ -197,6 +205,41 @@ class Token:
             self.save = False
             self.currentToken = self.TokenType.ID
             self.curstate = self.State.DONE
+
+    def state_INPLUS(self,c):
+        i = 3 ;
+        LastNonEmptyChar = self.curline[self.pos - i]   # last non-empty character before plus
+
+        while LastNonEmptyChar == ' ':
+            i += 1
+            LastNonEmptyChar =  self.curline[self.pos - i]
+
+        if not c.isdigit() or LastNonEmptyChar.isalpha() or LastNonEmptyChar.isdigit() or ( LastNonEmptyChar == "_"):
+            self.ungetNextChar()
+            self.save = False
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.PLUS
+        else:
+            self.save = True
+            self.curstate = self.State.INNUM
+
+    def state_INMINUS(self,c):
+        i = 3 ;
+        LastNonEmptyChar = self.curline[self.pos - i]   # last non-empty character before plus
+
+        while LastNonEmptyChar == ' ':
+            i += 1
+            LastNonEmptyChar =  self.curline[self.pos - i]
+
+        if not c.isdigit() or LastNonEmptyChar.isalpha() or LastNonEmptyChar.isdigit() or ( LastNonEmptyChar == "_"):
+            self.ungetNextChar()
+            self.save = False
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.MINUS
+        else:
+            self.save = True
+            self.curstate = self.State.INNUM
+
 
     #def state_POWER(self,c):
     #    if c.isdigit():
@@ -253,6 +296,8 @@ class Token:
                             self.State.INID: lambda x: self.state_INID(x),
                             self.State.QUOTEORSTR: lambda x: self.state_QUOTEORSTR(x),
                             self.State.STRING: lambda x: self.state_STRING(x),
+                            self.State.INPLUS: lambda x: self.state_INPLUS(x),
+                            self.State.INMINUS: lambda x: self.state_INMINUS(x),
                             #self.State.POWER: lambda x: self.state_POWER(x),
             }[self.curstate](c)
             if self.save :
