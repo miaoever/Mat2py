@@ -25,6 +25,8 @@ class Token:
                     "QUOTEORSTR",       #just single quote or begin of string
                     "DOTORNUM",         #just dot or a float number
                     "STRING",
+                    "ORORLOGIC",
+                    "ANDORLOGIC",
                     "DONE")
 
         #token type list
@@ -58,6 +60,10 @@ class Token:
                         "COMMA",
                         "DOT",
                         "STRING",
+                        "AND",
+                        "OR",
+                        "LOGICAND",
+                        "LOGICOR",
                         "ERROR",
                         "ENDFILE")
 
@@ -127,7 +133,7 @@ class Token:
         elif c == "%":
             self.save = False
             self.curstate = self.State.INCOMMENT
-        elif c == "!":
+        elif c == "~":
             self.save = True
             self.curstate = self.State.INUNEQ
         elif c == "=":
@@ -151,6 +157,12 @@ class Token:
         elif c == "-":
             self.save = True
             self.curstate = self.State.INMINUS
+        elif c == "&":
+            self.save = True
+            self.curstate = self.State.ANDORLOGIC
+        elif c == "|":
+            self.save = True
+            self.curstate = self.State.ORORLOGIC
         else:
             self.curstate = self.State.DONE
             self.currentToken = self.getTokenType(c)
@@ -223,6 +235,7 @@ class Token:
             self.save = True
             self.curstate = self.State.INNUM
 
+    #minus operator or negative number
     def state_INMINUS(self,c):
         i = 3 ;
         LastNonEmptyChar = self.curline[self.pos - i]   # last non-empty character before plus
@@ -239,6 +252,30 @@ class Token:
         else:
             self.save = True
             self.curstate = self.State.INNUM
+
+    # && or &
+    def state_ANDORLOGIC(self,c):
+        if c == "&":
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.AND
+            self.save  = True
+        else:
+            self.ungetNextChar()
+            self.save = False
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.LOGICAND
+
+    # | or ||
+    def state_ORORLOGIC(self,c):
+        if c == "|":
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.OR
+            self.save  = True
+        else:
+            self.ungetNextChar()
+            self.save = False
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.LOGICOR
 
 
     #def state_POWER(self,c):
@@ -298,6 +335,8 @@ class Token:
                             self.State.STRING: lambda x: self.state_STRING(x),
                             self.State.INPLUS: lambda x: self.state_INPLUS(x),
                             self.State.INMINUS: lambda x: self.state_INMINUS(x),
+                            self.State.ANDORLOGIC: lambda x: self.state_ANDORLOGIC(x),
+                            self.State.ORORLOGIC: lambda x: self.state_ORORLOGIC(x),
                             #self.State.POWER: lambda x: self.state_POWER(x),
             }[self.curstate](c)
             if self.save :
