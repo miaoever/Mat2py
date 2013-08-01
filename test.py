@@ -1,13 +1,17 @@
-from lexer import *
+#!/usr/bin/python
+# -*- coding: utf-8 -*- 
+import sys
+#sys.path.append("mat2py")
+from source.lexer import *
+from source.token import *
 
 def main():
     source = "test.m"
-    token = Token(source)
-    tokenString = ""
+    lexer = Lexer(source)
     while True:
-        tokenString,tokenType = token.getToken()
-        if  tokenString:
-            print "<",tokenString,",",tokenType,">"
+        token = lexer.getToken()
+        if  token.tokenValue:
+            print "<",token.tokenValue,",",token.tokenType,">"
         else:
             break
 
