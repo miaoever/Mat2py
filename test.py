@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*- 
-import sys
-#sys.path.append("mat2py")
+
 from source.lexer import *
 from source.token import *
 
