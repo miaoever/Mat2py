@@ -32,6 +32,7 @@ class Lexer:
         self.TokenType = Token.getTokenTypeList()
         self.path = path        #self.source file
         self.pos = 0             #current self.position in current line
+        self.lineno = 0          #current line number
         self.curline = ""        #current line buffer
         self.currenToken = -1    #current self.TokenType
         self.curstate = -1       #current state
@@ -44,6 +45,7 @@ class Lexer:
     def __getNextChar(self):
         if self.pos >= len(self.curline):
             self.curline = self.source.readline()
+            self.lineno += 1
             if not self.curline:
                 return ""
             self.pos = 0
@@ -309,4 +311,4 @@ class Lexer:
             #self.tokenString += '\0'
             #print self.tokenString
             #return self.token.setToken(self.tokenString, self.TokenType.reverse_mapping[self.currentToken])
-            return Token(self.tokenString, self.TokenType.reverse_mapping[self.currentToken])
+            return Token(self.tokenString, self.TokenType.reverse_mapping[self.currentToken], self.lineno)

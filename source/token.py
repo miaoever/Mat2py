@@ -4,9 +4,10 @@
 from enum import *
 
 class Token:
-    def __init__(self,Value = None,Type = ""):
+    def __init__(self,Value = "",Type = "",lineno = 0):
         self.tokenValue = Value
         self.tokenType  = Type
+        self.lineno = lineno
 
     @staticmethod
     def getTokenTypeList():
@@ -50,9 +51,9 @@ class Token:
         return TypeList
 
 
-    def  setToken(self,Value,Type):
+    def  setToken(self,Value,Type,lineno):
         self.tokenValue = Value
         self.tokenType  = Type
+        self.lineno = lineno
         return self
 
-    
