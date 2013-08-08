@@ -10,7 +10,7 @@ def main():
     while True:
         token = lexer.getToken()
         if  token.tokenValue:
-            print "<",token.tokenValue,",",token.tokenType,">"
+            print "<",token.lineno,",",token.tokenValue,",",token.tokenType,">"
         else:
             break
 

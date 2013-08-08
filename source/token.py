@@ -4,7 +4,7 @@
 from enum import *
 
 class Token:
-    def __init__(self,Value = "",Type = "",lineno = 0):
+    def __init__(self,Value ,Type ,lineno = 0):
         self.tokenValue = Value
         self.tokenType  = Type
         self.lineno = lineno
@@ -18,7 +18,9 @@ class Token:
                         "ELSE",
                         "END",
                         "FOR",
+                        "WHILE",
                         "ID",
+                        "RETURN",
                         "NUM",
                         "POW",
                         "ASSIGN",
@@ -46,10 +48,24 @@ class Token:
                         "OR",
                         "LOGICAND",
                         "LOGICOR",
+                        "LOGICNOT",
                         "ERROR",
                         "ENDFILE")
         return TypeList
 
+    @staticmethod
+    def getReservedWord():
+        TokenType = Token.getTokenTypeList()
+        ReservedWord = {
+                    'if': TokenType.IF,
+                    'else': TokenType.ELSE,
+                    'end': TokenType.END,
+                    'function': TokenType.FUNCTION,
+                    'for': TokenType.FOR,
+                    'while':TokenType.WHILE,
+                    'return':TokenType.RETURN
+                }
+        return ReservedWord
 
     def  setToken(self,Value,Type,lineno):
         self.tokenValue = Value

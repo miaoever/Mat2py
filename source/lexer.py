@@ -30,6 +30,7 @@ class Lexer:
         #token type list
         #self.token = Token()
         self.TokenType = Token.getTokenTypeList()
+        self.ReservedWord = Token.getReservedWord()
         self.path = path        #self.source file
         self.pos = 0             #current self.position in current line
         self.lineno = 0          #current line number
@@ -78,7 +79,8 @@ class Lexer:
                     ';': self.TokenType.SEMI,
                     '[': self.TokenType.LBRACKET,
                     ']': self.TokenType.RBRACKET,
-                    '^': self.TokenType.POW
+                    '^': self.TokenType.POW,
+                    ':': self.TokenType.COL
                 }
         if c in token.keys():
             return token[c]
@@ -256,7 +258,7 @@ class Lexer:
     def __state_QUOTEORSTR(self,c):
         self.__ungetNextChar()
         lookback = self.__lookbackChar()
-        if lookback.isalpha():
+        if lookback.isalpha() or lookback == ')':
             self.currentToken = self.TokenType.TRANSPOSE
             self.save = False
             self.curstate = self.State.DONE
@@ -308,7 +310,9 @@ class Lexer:
                 self.tokenString += c;
 
         if self.curstate == self.State.DONE:
-            #self.tokenString += '\0'
-            #print self.tokenString
-            #return self.token.setToken(self.tokenString, self.TokenType.reverse_mapping[self.currentToken])
-            return Token(self.tokenString, self.TokenType.reverse_mapping[self.currentToken], self.lineno)
+            #return Token(self.tokenString, self.TokenType.reverse_mapping[self.currentToken], self.lineno)
+            if self.tokenString in self.ReservedWord.keys():
+                self.currentToken =  self.ReservedWord[self.tokenString]
+
+            return Token(self.tokenString, self.currentToken, self.lineno)
+
