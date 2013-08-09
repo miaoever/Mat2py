@@ -4,7 +4,7 @@
 from source.parser import *
 
 def main():
-    source = "test3.m"
+    source = "MDS.m"
     #source = "test3.m"
     parser = Parser(source)
     t = parser.parse()
