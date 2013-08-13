@@ -25,12 +25,12 @@ class TreeNode:
         return __NodeKindList, __SmtKindList,  __ExpKindList, __DecKindList
 
     def __init__(self,nodeK ,subK,attr = None ,lineno = 0):
-        self.lineno = lineno
         self.nodekind = nodeK   #node kind - statement or expression
         self.subkind = subK     # sub kind of node kind
+        self.attr = attr
+        self.lineno = lineno
         self.sibling = []
         self.child = []
-        self.attr = ""
 
 class Parser:
     def __init__(self,source):
@@ -242,7 +242,7 @@ class Parser:
         if gotlvalue and self.token.tokenType == self.TokenType.ASSIGN:
             if  lvalue and lvalue.nodekind == self.NodeKind.EXP and (lvalue.subkind in (self.ExpKind.ID, self.ExpKind.RANGE, self.ExpKind.FUNC_CALL, self.ExpKind.VECTOR)):
                 self.__match(self.TokenType.ASSIGN)
-                rvalue = self.__expression()
+                rvalue = self.__simple_expression(None)
 
                 t = TreeNode(
                             self.NodeKind.EXP,
@@ -265,10 +265,9 @@ class Parser:
 
         if self.token.tokenType in (self.TokenType.GT, self.TokenType.LT, self.TokenType.LE, self.TokenType.GE, self.TokenType.EQ, self.TokenType.UNEQ, self.TokenType.LOGICAND, self.TokenType.LOGICOR):
             operator = self.token.tokenType
-
             t = TreeNode(
                         self.NodeKind.EXP,
-                        self.ExpKind.OP,
+                        self.ExpKind.OP,__term(passdown),
                         self.token.tokenValue,
                         self.token.lineno
             )
@@ -287,7 +286,6 @@ class Parser:
 
     def __additive_expression(self,passdown):
         t = self.__term(passdown)
-
         while self.token.tokenType == self.TokenType.PLUS or self.token.tokenType == self.TokenType.MINUS:
 
             newNode = TreeNode(
@@ -305,7 +303,6 @@ class Parser:
 
     # * , /
     def __term(self,passdown):
-        #t = self.__factor(passdown)
         t = self.__transpose(passdown)
         while self.token.tokenType == self.TokenType.TIMES or self.token.tokenType == self.TokenType.DIV:
             newNode = TreeNode(
@@ -336,6 +333,7 @@ class Parser:
             t = newNode
             self.__match(self.TokenType.TRANSPOSE)
 
+        return t
     #handle power
     def __elem(self,passdown):
         t = self.__factor(passdown)
