@@ -16,7 +16,7 @@ class TreeNode:
         )
 
         __ExpKindList = Enum.enum (
-            "OP", "CONST", "ID", "STRING", "ASSIGN","RANGE", "STEP", "FUNC_CALL", "VECTOR"
+            "OP", "CONST", "ID", "STRING", "ASSIGN","RANGE", "FUNC_CALL", "VECTOR","ARGUMENT", "LIST"
         )
 
         __DecKindList = Enum.enum (
@@ -29,7 +29,8 @@ class TreeNode:
         self.subkind = subK     # sub kind of node kind
         self.attr = attr
         self.lineno = lineno
-        self.sibling = []
+        #self.sibling = []
+        self.sibling = None
         self.child = []
 
 class Parser:
@@ -57,7 +58,8 @@ class Parser:
         while self.token.tokenType not in (self.TokenType.ENDFILE, self.TokenType.END, self.TokenType.ELSE):
             newNode = self.__statement()
             if ptr and newNode:
-                ptr.sibling.append(newNode)
+                #ptr.sibling.append(newNode)
+                ptr.sibling = newNode
                 ptr = newNode
 
         return t
@@ -162,19 +164,14 @@ class Parser:
             self.__match(self.TokenType.COL)
             step = temp
             end = self.__factor(None)
+            begin.sibling = step
+            step.sibling = end
         else:
             step = None
             end = temp
-        t = TreeNode(
-                    self.NodeKind.EXP,
-                    self.ExpKind.STEP,
-                    self.token.tokenValue,
-                    self.token.lineno
-                )
-        t.child.append(begin)
-        t.child.append(step)
-        t.child.append(end)
+            begein.sibling = end
 
+        t = begin
         return t
 
     def __whileLoop_stmt(self):
@@ -189,6 +186,8 @@ class Parser:
         t.child.append(whileStmt)
         self.__match(self.TokenType.END)
 
+        return t
+
     def __func_declaration(self):
         self.__match(self.TokenType.FUNCTION)
         if self.token.tokenType == self.TokenType.LBRACKET:
@@ -198,13 +197,14 @@ class Parser:
         else:
             #return_param = self.__mat_range()
             return_param = self.__factor(None)
+
         self.__match(self.TokenType.ASSIGN)
         func_name  = self.token.tokenValue
+        self.__match(self.TokenType.ID)
 
         #add user-define function to function-table
         self.FuncTable.append(func_name)
 
-        self.__match(self.TokenType.ID)
         self.__match(self.TokenType.LPAREN)
         arguments = self.__args()
         self.__match(self.TokenType.RPAREN)
@@ -235,12 +235,12 @@ class Parser:
         gotlvalue = False
         lvalue = None
         if self.token.tokenType in (self.TokenType.ID, self.TokenType.LBRACKET,  self.TokenType.STRING):
-            lvalue = self.__ident_statement()
+            lvalue = self.__ident_statement(True)
             gotlvalue = True
 
         #Assignment ?
         if gotlvalue and self.token.tokenType == self.TokenType.ASSIGN:
-            if  lvalue and lvalue.nodekind == self.NodeKind.EXP and (lvalue.subkind in (self.ExpKind.ID, self.ExpKind.RANGE, self.ExpKind.FUNC_CALL, self.ExpKind.VECTOR)):
+            if  lvalue and lvalue.nodekind == self.NodeKind.EXP and (lvalue.subkind in (self.ExpKind.ID, self.ExpKind.RANGE, self.ExpKind.FUNC_CALL, self.ExpKind.LIST)):
                 self.__match(self.TokenType.ASSIGN)
                 rvalue = self.__simple_expression(None)
 
@@ -267,7 +267,7 @@ class Parser:
             operator = self.token.tokenType
             t = TreeNode(
                         self.NodeKind.EXP,
-                        self.ExpKind.OP,__term(passdown),
+                        self.ExpKind.OP,
                         self.token.tokenValue,
                         self.token.lineno
             )
@@ -386,7 +386,7 @@ class Parser:
         return t
 
     #identifier ---- everything which could be left-value
-    def __ident_statement(self):
+    def __ident_statement(self, isList = False):
         if  self.token.tokenType == self.TokenType.ID:
             identifier = self.token.tokenValue
             self.__match(self.TokenType.ID)
@@ -404,7 +404,6 @@ class Parser:
                             self.token.lineno
                 )
                 t.child.append(arguments)
-                #t.attr = identifier
             else:
                 t = TreeNode(
                     self.NodeKind.EXP,
@@ -415,16 +414,27 @@ class Parser:
                 #t.attr = identifier
             #[row]
         elif self.token.tokenType == self.TokenType.LBRACKET:
-                self.__match(self.TokenType.LBRACKET)
-                t = TreeNode(
-                        self.NodeKind.EXP,
-                        self.ExpKind.VECTOR,
-                        self.token.tokenValue,
-                        self.token.lineno
-                    )
+                if isList:
+                    self.__match(self.TokenType.LBRACKET)
+                    t = TreeNode(
+                            self.NodeKind.EXP,
+                            self.ExpKind.LIST,
+                            self.token.tokenValue,
+                            self.token.lineno
+                        )
+                else:
+                    self.__match(self.TokenType.LBRACKET)
+                    t = TreeNode(
+                            self.NodeKind.EXP,
+                            self.ExpKind.VECTOR,
+                            self.token.tokenValue,
+                            self.token.lineno
+                        )
+
                 mat_range = self.__row()
                 t.child.append(mat_range)
                 self.__match(self.TokenType.RBRACKET)
+
         return t
 
     def __args(self):
@@ -434,26 +444,18 @@ class Parser:
         return t
 
     def __arg_list(self):
-        if self.token.tokenType == self.TokenType.STRING:
-            t = TreeNode(
-                        self.NodeKind.EXP,
-                        self.ExpKind.STRING,
-                        self.token.tokenValue,
-                        self.token.lineno
-                    )
-            #t.attr = self.token.tokenValue
-            self.__match(self.TokenType.STRING)
-        else:
-            t = self.__expression()
-        ptr = t
-
+        t = self.__expression()
         while self.token.tokenType == self.TokenType.COMMA:
             self.__match(self.TokenType.COMMA)
-            newNode = self.__expression()
-            if ptr and t:
-                ptr.sibling.append(newNode)
-                ptr = newNode
-
+            newNode = self.__args()
+            if t:
+                if newNode:
+                    t.sibling = newNode
+            elif newNode:
+                t = newNode
+            #if ptr and t:
+            #    ptr.sibling.append(newNode)
+            #    ptr = newNode
         return t
 
     def __row(self):
@@ -462,9 +464,11 @@ class Parser:
             self.__match(self.TokenType.SEMI)
             newNode = self.__col()
             if t:
-                t.sibling.append(newNode)
-            else:
+                if newNode:
+                    t.sibling = newNode
+            elif newNode:
                 t = newNode
+
         return t
 
     def __col(self):
@@ -487,10 +491,10 @@ class Parser:
             self.__match(self.TokenType.COMMA)
             newNode2 = self.__col()
             if t:
-                t.sibling.append(newNode2)
-            else:
+                if newNode2:
+                    t.sibling = newNode2
+            elif newNode2:
                 t = newNode2
-
         return t
 
     def parse(self):

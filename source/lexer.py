@@ -306,7 +306,7 @@ class Lexer:
                             self.State.ORORLOGIC: lambda x: self.__state_ORORLOGIC(x),
                             #self.State.POWER: lambda x: self.state_POWER(x),
             }[self.curstate](c)
-            if self.save :
+            if self.save and c != " ":
                 self.tokenString += c;
 
         if self.curstate == self.State.DONE:
