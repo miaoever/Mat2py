@@ -50,6 +50,8 @@ class CodeGen:
             self.out.write(" " * 4 * self.incident)
 
     def __emitCode(self, content):
+        if not content:
+            return
         if not self.outPath:
             #sys.stdout.write(" " * 4 * self.incident)
             sys.stdout.write(content)
@@ -57,16 +59,25 @@ class CodeGen:
         else:
             self.out.write(content)
 
+    #decrease 1 for number in string
+    def __strDec(self,string):
+        return str(int(string) - 1)
+
+    def __visitSibling(self,head,op,split=""):
+            sibling = head.sibling
+            while sibling:
+                self.__emitCode(split)
+                op(sibling)
+                sibling = sibling.sibling
+
     def __traverse(self,curNode):
         if curNode != None:
             if curNode.nodekind == self.NodeKind.STMT:
                 self.__genStmt(curNode)
             elif curNode.nodekind == self.NodeKind.EXP:
                 self.__genExp(curNode)
-            sibling = curNode.sibling
-            while sibling:
-                self.__traverse(sibling)
-                sibling = sibling.sibling
+
+            self.__visitSibling(curNode,self.__traverse)
             sys.stdout.flush()
 
     def __genExp(self,curNode):
@@ -101,39 +112,44 @@ class CodeGen:
 
         elif curNode.subkind == self.ExpKind.ASSIGN:
             self.__genExp(curNode.child[0])
-            self.__emitCode(" = copy.deepcopy(")
+            #self.__emitCode(" = copy.deepcopy(")
+            self.__emitCode(" = ")
             self.__genExp(curNode.child[1])
-            self.__emitCode(")")
+            #self.__emitCode(")")
 
         elif curNode.subkind == self.ExpKind.FUNC_CALL:
             if curNode.attr in self.FuncTable:
                 self.__emitCode(curNode.attr + "(")
                 self.__genExp(curNode.child[0])
-                sibling = curNode.child[0].sibling
-                while sibling != None :
-                    self.__emitCode(", ")
-                    self.__genExp(sibling)
-                    sibling = sibling.sibling
+
+                self.__visitSibling(curNode.child[0],self.__genExp,", ")
                 self.__emitCode(")")
+
             elif curNode.attr in self.LibFunc:
                 #dynamic load lib function
-                try:
+                #try:
                     lib_func_name = curNode.attr
                     lib_mod = imp.load_source(lib_func_name, self.libPath + lib_func_name + ".py")
-                    result = getattr(lib_mod, lib_func_name.lower())()
-                    self.__emitCode(result)
-                except:
-                    print "\n>> Error to load lib function : " + lib_func_name + "() <<\n"
+                    #add lib function to the member of class
+                    CodeGen.newLibFunc = getattr(lib_mod, lib_func_name.lower())
+                    self.newLibFunc(curNode)
+                    #self.__emitCode(result)
+                #except:
+                #    print "\n>> Error to load lib function : " + lib_func_name + "() <<\n"
             else:
                 self.__emitCode(curNode.attr + "[")
                 col = curNode.child[0]
                 self.__genExp(col)
+
+                self.__visitSibling(curNode.child[0],self.__genExp,", ")
                 self.__emitCode("]")
 
-        #elif curNode.subkind == self.ExpKind.LIST:
+        elif curNode.subkind == self.ExpKind.VECTOR:
+            self.__genExp(curNode.child[0])
 
-
-
+        elif curNode.subkind == self.ExpKind.LIST:
+            self.__genExp(curNode.child[0])
+            self.__visitSibling(curNode.child[0],self.__genExp,", ")
 
         elif curNode.subkind == self.ExpKind.RANGE:
             self.__genExp(curNode.child[0])
@@ -141,11 +157,7 @@ class CodeGen:
                 self.__emitCode(":")
                 self.__genExp(curNode.child[1])
 
-            sibling = curNode.sibling
-            while sibling:
-                self.__emitCode(", ")
-                self.__genExp(sibling)
-                sibling = sibling.sibling
+            self.__visitSibling(curNode,self.__genExp,", ")
 
     def __genStmt(self, curNode):
         if not curNode:
@@ -161,10 +173,7 @@ class CodeGen:
             #Then statement
             thenStmt = curNode.child[1]
             self.__genStmt(thenStmt)
-            sibling = thenStmt.sibling
-            while sibling:
-                self.__genStmt(sibling)
-                sibling = sibling.sibling
+            self.__visitSibling(thenStmt,self.__genStmt)
 
             #Else statement
             if curNode.child[2]:
@@ -175,10 +184,7 @@ class CodeGen:
                 #self.__emitIncident()
                 elseStmt = curNode.child[2]
                 self.__genStmt(elseStmt)
-                sibling = elseStmt.sibling
-                while sibling:
-                    self.__genStmt(sibling)
-                    sibling = sibling.sibling
+                self.__visitSibling(elseStmt,self.__genStmt)
             self.incident -= 1
 
         elif curNode.subkind == self.StmtKind.FOR:
@@ -187,26 +193,22 @@ class CodeGen:
             forCond = curNode.child[0]
             self.__genExp(forCond.child[0])
             self.__emitCode(" = xrange(")
-            forCond.child[1].attr = str(int(forCond.child[1].attr) - 1) #convert base 1 to base 0
+            forCond.child[1].attr = self.__strDec(forCond.child[1].attr)  #convert base 1 to base 0
             self.__genExp(forCond.child[1] )
             step = forCond.child[1].sibling
             #while sibling:
             self.__emitCode(",")
-               # sibling.attr = int(sibling.attr) - 1 #convert base 1 to base 0
             self.__genExp(step)
-            self.__emitCode(",")
-            end = step.sibling
-            end.attr = str(int(end.attr) - 1)
-            self.__genExp(end)
+            if step.sibling:
+                self.__emitCode(",")
+                end = step.sibling
+                self.__genExp(end)
             self.__emitCode("):\n")
 
             forStmt = curNode.child[1]
             self.incident +=1
             self.__genStmt(forStmt)
-            sibling = forStmt.sibling
-            while sibling:
-                self.__genStmt(sibling)
-                sibling = sibling.sibling
+            self.__visitSibling(forStmt,self.__genStmt)
 
             self.incident -= 1
 
@@ -223,39 +225,28 @@ class CodeGen:
 
         elif curNode.subkind == self.StmtKind.FUNC_DECLARE:
             self.__emitIncident()
-            self.__emitCode("\ndef ")
+            self.__emitCode("\n\ndef ")
             func_name = curNode.attr
             self.__emitCode(func_name+"(")
 
             #emit arguments
             arguments = curNode.child[0]
             self.__genExp(arguments)
-            sibling = arguments.sibling
-            while sibling:
-                self.__emitCode(",")
-                self.__genExp(sibling)
-                sibling = sibling.sibling
-            self.__emitCode("):\n")
+            self.__visitSibling(arguments,self.__genExp,", ")
+            self.__emitCode("):\n\n")
 
             #emit function body
             self.incident += 1
             func_body = curNode.child[1]
             self.__genStmt(func_body)
-            sibling = func_body.sibling
-            while sibling:
-                self.__genStmt(sibling)
-                sibling = sibling.sibling
+            self.__visitSibling(func_body,self.__genStmt)
 
             #emit return parameters
             return_param = curNode.child[2]
             self.__emitIncident()
             self.__emitCode("return ")
             self.__genExp(return_param)
-            sibling = return_param.sibling
-            while sibling:
-                self.__emitCode(",")
-                self.__genExp(sibling)
-                sibling = sibling.sibling
+            self.__visitSibling(return_param,self.__genExp,", ")
 
             self.incident -= 1
 

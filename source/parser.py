@@ -80,6 +80,7 @@ class Parser:
         else:
             self.__syntaxError("unexpected token -> " + self.token.tokenValue)
             #self.token = self.lexer.getToken()
+            exit()
             t = None
 
         return t
@@ -169,7 +170,7 @@ class Parser:
         else:
             step = None
             end = temp
-            begein.sibling = end
+            begin.sibling = end
 
         t = begin
         return t
@@ -411,9 +412,9 @@ class Parser:
                     identifier,
                     self.token.lineno
                 )
-                #t.attr = identifier
             #[row]
         elif self.token.tokenType == self.TokenType.LBRACKET:
+                # isList = True mean [element,element] is on the left side of '=' ,just treated as a list in python
                 if isList:
                     self.__match(self.TokenType.LBRACKET)
                     t = TreeNode(
@@ -422,6 +423,7 @@ class Parser:
                             self.token.tokenValue,
                             self.token.lineno
                         )
+                    isVector = False
                 else:
                     self.__match(self.TokenType.LBRACKET)
                     t = TreeNode(
@@ -430,8 +432,9 @@ class Parser:
                             self.token.tokenValue,
                             self.token.lineno
                         )
+                    isVector = True
 
-                mat_range = self.__row()
+                mat_range = self.__row(isVector)
                 t.child.append(mat_range)
                 self.__match(self.TokenType.RBRACKET)
 
@@ -458,20 +461,35 @@ class Parser:
             #    ptr = newNode
         return t
 
-    def __row(self):
-        t = self.__col()
+    def __row(self, isVector = False, isFirstCall = True):
+        t = self.__col(isVector)
+        if self.token.tokenType == self.TokenType.SEMI:
+            isVstack = True
+        else:
+            isVstack = False
+
         while self.token.tokenType == self.TokenType.SEMI:
             self.__match(self.TokenType.SEMI)
-            newNode = self.__col()
+            newNode = self.__row(isVector, False)
             if t:
                 if newNode:
                     t.sibling = newNode
             elif newNode:
                 t = newNode
 
+        if isVstack and isVector and isFirstCall:
+            t2 = TreeNode(
+                        self.NodeKind.EXP,
+                        self.ExpKind.FUNC_CALL,
+                        "vstack",
+                        self.token.lineno
+                    )
+            t2.child.append(t)
+            t = t2
+
         return t
 
-    def __col(self):
+    def __col(self, isVector = False, isFirstCall = True):
         newNode = self.__simple_expression(None)
         # [mat_range:mat_range]
         if self.token.tokenType == self.TokenType.COL:
@@ -487,14 +505,30 @@ class Parser:
         #[mat_range,mat_range]
         else:
             t = newNode
+
+        if self.token.tokenType == self.TokenType.COMMA:
+            isHstack = True
+        else:
+            isHstack = False
+
         while self.token.tokenType == self.TokenType.COMMA:
             self.__match(self.TokenType.COMMA)
-            newNode2 = self.__col()
+            newNode2 = self.__col(isVector, False)
             if t:
                 if newNode2:
                     t.sibling = newNode2
             elif newNode2:
                 t = newNode2
+        if isHstack and isVector and isFirstCall:
+            t2 = TreeNode(
+                        self.NodeKind.EXP,
+                        self.ExpKind.FUNC_CALL,
+                        "hstack",
+                        self.token.lineno
+                    )
+            t2.child.append(t)
+            t = t2
+
         return t
 
     def parse(self):
