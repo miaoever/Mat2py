@@ -6,6 +6,7 @@ from enum import *
 import sys
 import os
 import imp
+import pdb
 
 class CodeGen:
 
@@ -28,8 +29,6 @@ class CodeGen:
 
 
     def generate(self):
-        #source = "test_NP2.m"
-        #source = "test3.m"
         parser = Parser(self.inPath)
         self.ast,self.FuncTable = parser.parse()
         self.__genHeader()
@@ -41,7 +40,7 @@ class CodeGen:
         self.__emitCode("import numpy as np\n")
         self.__emitCode("import copy\n")
         self.__emitCode("import os\n")
-        self.__emitCode("import sys\n\n")
+        self.__emitCode("import sys\n")
 
     def __emitIncident(self):
         if not self.outPath:
@@ -53,9 +52,7 @@ class CodeGen:
         if not content:
             return
         if not self.outPath:
-            #sys.stdout.write(" " * 4 * self.incident)
             sys.stdout.write(content)
-            #sys.stdout.flush()
         else:
             self.out.write(content)
 
@@ -77,8 +74,7 @@ class CodeGen:
             elif curNode.nodekind == self.NodeKind.EXP:
                 self.__genExp(curNode)
 
-            self.__visitSibling(curNode,self.__traverse)
-            sys.stdout.flush()
+            self.__visitSibling(curNode,self.__genStmt)
 
     def __genExp(self,curNode):
         if not curNode:
@@ -133,7 +129,6 @@ class CodeGen:
                     #add lib function to the member of class
                     CodeGen.newLibFunc = getattr(lib_mod, lib_func_name.lower())
                     self.newLibFunc(curNode)
-                    #self.__emitCode(result)
                 #except:
                 #    print "\n>> Error to load lib function : " + lib_func_name + "() <<\n"
             else:
@@ -153,11 +148,11 @@ class CodeGen:
 
         elif curNode.subkind == self.ExpKind.RANGE:
             self.__genExp(curNode.child[0])
+            self.__emitCode(":")
             if curNode.child[1]:
-                self.__emitCode(":")
                 self.__genExp(curNode.child[1])
 
-            self.__visitSibling(curNode,self.__genExp,", ")
+            #self.__visitSibling(curNode,self.__genExp,", ")
 
     def __genStmt(self, curNode):
         if not curNode:
@@ -225,7 +220,7 @@ class CodeGen:
 
         elif curNode.subkind == self.StmtKind.FUNC_DECLARE:
             self.__emitIncident()
-            self.__emitCode("\n\ndef ")
+            self.__emitCode("\ndef ")
             func_name = curNode.attr
             self.__emitCode(func_name+"(")
 
@@ -243,11 +238,14 @@ class CodeGen:
 
             #emit return parameters
             return_param = curNode.child[2]
-            self.__emitIncident()
-            self.__emitCode("return ")
-            self.__genExp(return_param)
-            self.__visitSibling(return_param,self.__genExp,", ")
+            if return_param:
+                self.__emitCode("\n")
+                self.__emitIncident()
+                self.__emitCode("return ")
+                self.__genExp(return_param)
+                self.__visitSibling(return_param,self.__genExp,", ")
 
+            self.__emitCode("\n")
             self.incident -= 1
 
         else:

@@ -53,15 +53,15 @@ class Parser:
 
     def __stmt_list(self):
         t = self.__statement()
-        ptr = t
 
-        while self.token.tokenType not in (self.TokenType.ENDFILE, self.TokenType.END, self.TokenType.ELSE):
-            newNode = self.__statement()
-            if ptr and newNode:
-                #ptr.sibling.append(newNode)
-                ptr.sibling = newNode
-                ptr = newNode
-
+        if self.token.tokenType not in (self.TokenType.ENDFILE, self.TokenType.END, self.TokenType.ELSE):
+            newNode = self.__stmt_list()
+           # if ptr and newNode:
+            if t:
+                if newNode:
+                    t.sibling = newNode
+            elif newNode:
+                t = newNode
         return t
 
     def __statement(self):
@@ -195,18 +195,29 @@ class Parser:
             self.__match(self.TokenType.LBRACKET)
             return_param = self.__col()
             self.__match(self.TokenType.RBRACKET)
+            self.__match(self.TokenType.ASSIGN)
         else:
-            #return_param = self.__mat_range()
-            return_param = self.__factor(None)
+            lookahead = self.token
+            self.token = self.lexer.getToken()
+            if self.token.tokenType == self.TokenType.ASSIGN:
+                return_param = TreeNode(
+                                    self.NodeKind.EXP,
+                                    self.ExpKind.ID,
+                                    lookahead.tokenValue,
+                                    lookahead.lineno
+                    )
+                self.__match(self.TokenType.ASSIGN)
+                func_name  = self.token.tokenValue
+                self.__match(self.TokenType.ID)
+            else:
+                return_param = None
+                func_name = lookahead.tokenValue
 
-        self.__match(self.TokenType.ASSIGN)
-        func_name  = self.token.tokenValue
-        self.__match(self.TokenType.ID)
+        self.__match(self.TokenType.LPAREN)
 
         #add user-define function to function-table
         self.FuncTable.append(func_name)
 
-        self.__match(self.TokenType.LPAREN)
         arguments = self.__args()
         self.__match(self.TokenType.RPAREN)
         func_body = self.__stmt_list()
@@ -221,7 +232,6 @@ class Parser:
         t.child.append(arguments)
         t.child.append(func_body)
         t.child.append(return_param)
-        #t.attr = func_name
 
         return t
 
@@ -468,7 +478,7 @@ class Parser:
         else:
             isVstack = False
 
-        while self.token.tokenType == self.TokenType.SEMI:
+        if self.token.tokenType == self.TokenType.SEMI:
             self.__match(self.TokenType.SEMI)
             newNode = self.__row(isVector, False)
             if t:
@@ -511,7 +521,7 @@ class Parser:
         else:
             isHstack = False
 
-        while self.token.tokenType == self.TokenType.COMMA:
+        if self.token.tokenType == self.TokenType.COMMA:
             self.__match(self.TokenType.COMMA)
             newNode2 = self.__col(isVector, False)
             if t:
