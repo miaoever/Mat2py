@@ -49,6 +49,11 @@ class Token:
                         "LOGICAND",
                         "LOGICOR",
                         "LOGICNOT",
+                        "DOTRDIV",
+                        "DOTLDIV",
+                        "DOTTIMES",
+                        "DOTPOW",
+                        "DOTTRANSPOSE",
                         "ERROR",
                         "ENDFILE")
         return TypeList

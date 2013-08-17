@@ -198,6 +198,8 @@ class Parser:
             return_param = self.__col()
             self.__match(self.TokenType.RBRACKET)
             self.__match(self.TokenType.ASSIGN)
+            func_name = self.token.tokenValue
+            self.__match(self.TokenType.ID)
         else:
             lookahead = self.token
             self.token = self.lexer.getToken()
@@ -272,12 +274,11 @@ class Parser:
             t = self.__simple_expression(lvalue)
 
         return t
-
+    #handle logic operation : and or < > <= >= == ~=
     def __simple_expression(self,passdown):
         lExpr = self.__additive_expression(passdown)
 
         if self.token.tokenType in (self.TokenType.GT, self.TokenType.LT, self.TokenType.LE, self.TokenType.GE, self.TokenType.EQ, self.TokenType.UNEQ, self.TokenType.LOGICAND, self.TokenType.LOGICOR):
-            operator = self.token.tokenType
             t = TreeNode(
                         self.NodeKind.EXP,
                         self.ExpKind.OP,
@@ -285,13 +286,13 @@ class Parser:
                         self.token.lineno
             )
 
-            self.__match(operator)
+            self.__match(self.token.tokenType)
             rExpr = self.__additive_expression(None)
             t.child.append(lExpr)
             t.child.append(rExpr)
-        elif self.token.tokenType in (self.TokenType.LOGICAND, self.TokenType.LOGICOR):
+        #elif self.token.tokenType in (self.TokenType.LOGICAND, self.TokenType.LOGICOR):
             #dosth
-            a = 1
+         #   a = 1
         else:
             t = lExpr
 
@@ -299,7 +300,7 @@ class Parser:
 
     def __additive_expression(self,passdown):
         t = self.__term(passdown)
-        while self.token.tokenType == self.TokenType.PLUS or self.token.tokenType == self.TokenType.MINUS:
+        while self.token.tokenType in (self.TokenType.PLUS, self.TokenType.MINUS):
 
             newNode = TreeNode(
                         self.NodeKind.EXP,
@@ -317,7 +318,7 @@ class Parser:
     # * , /
     def __term(self,passdown):
         t = self.__transpose(passdown)
-        while self.token.tokenType == self.TokenType.TIMES or self.token.tokenType == self.TokenType.DIV:
+        while self.token.tokenType in (self.TokenType.TIMES , self.TokenType.DIV,  self.TokenType.DOTRDIV,  self.TokenType.DOTLDIV,  self.TokenType.DOTTIMES):
             newNode = TreeNode(
                         self.NodeKind.EXP,
                         self.ExpKind.OP,
@@ -333,8 +334,8 @@ class Parser:
 
     #handle transpose
     def __transpose(self,passdown):
-        t = self.__elem(passdown)
-        if self.token.tokenType == self.TokenType.TRANSPOSE:
+        t = self.__pow(passdown)
+        if self.token.tokenType in  (self.TokenType.TRANSPOSE,  self.TokenType.DOTTRANSPOSE):
             newNode = TreeNode(
                     self.NodeKind.EXP,
                     self.ExpKind.OP,
@@ -344,13 +345,14 @@ class Parser:
             #newNode.attr = self.token.tokenValue
             newNode.child.append(t)
             t = newNode
-            self.__match(self.TokenType.TRANSPOSE)
+            self.__match(self.token.tokenType)
 
         return t
+
     #handle power
-    def __elem(self,passdown):
-        t = self.__factor(passdown)
-        if self.token.tokenType == self.TokenType.POW:
+    def __pow(self,passdown):
+        t = self.__not(passdown)
+        if self.token.tokenType in (self.TokenType.POW, self.TokenType.DOTPOW):
             newNode = TreeNode(
                         self.NodeKind.EXP,
                         self.ExpKind.OP,
@@ -359,8 +361,24 @@ class Parser:
             )
             newNode.child.append(t)
             t = newNode
-            self.__match(self.TokenType.POW)
+            self.__match(self.token.tokenType)
             t.child.append(self.__factor(None))
+
+        return t
+
+    #handle logic not: ~ID
+    def __not(self,passdown):
+        if self.token.tokenType == self.TokenType.LOGICNOT:
+            t = TreeNode(
+                        self.NodeKind.EXP,
+                        self.ExpKind.OP,
+                        self.token.tokenValue,
+                        self.token.lineno
+            )
+            self.__match(self.TokenType.LOGICNOT)
+            t.child.append(self.__factor(None))
+        else:
+            t = self.__factor(passdown)
 
         return t
 

@@ -25,6 +25,7 @@ class Lexer:
                     "STRING",
                     "ORORLOGIC",
                     "ANDORLOGIC",
+                    "INDOT",
                     "DONE")
 
         #token type list
@@ -68,7 +69,7 @@ class Lexer:
                     #'<': self.TokenType.LT,
                     #'>': self.TokenType.GT,
                     #"'": self.TokenType.SQUOTE
-                    '.': self.TokenType.DOT,
+                    #'.': self.TokenType.DOT,
                     ',': self.TokenType.COMMA,
                     '+': self.TokenType.PLUS,
                     '-': self.TokenType.MINUS,
@@ -130,6 +131,9 @@ class Lexer:
         elif c == "|":
             self.save = True
             self.curstate = self.State.ORORLOGIC
+        elif c == ".":
+            self.save = True
+            self.curstate = self.State.INDOT
         else:
             self.curstate = self.State.DONE
             self.currentToken = self.__getTokenType(c)
@@ -162,8 +166,10 @@ class Lexer:
     def __state_INUNEQ(self,c):
         if c == '=':
             self.currentToken = self.TokenType.UNEQ
+            self.save = True
         else:
-            self.currentToken = self.TokenType.ERROR
+            self.__ungetNextChar()
+            self.currentToken = self.TokenType.LOGICNOT
             self.save = False
         self.curstate = self.State.DONE
 
@@ -244,6 +250,34 @@ class Lexer:
             self.curstate = self.State.DONE
             self.currentToken = self.TokenType.LOGICOR
 
+    def __state_INDOT(self,c):
+        if c == "*":
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.DOTTIMES
+            self.save = True
+        elif c == "/":
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.DOTRDIV
+            self.save = True
+        elif c == "\\":
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.DOTLDIV
+            self.save = True
+        elif c == "^":
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.DOTPOW
+            self.save = True
+        elif c == "'":
+            self.curstate = self.State.DONE
+            self.currentToken = self.TokenType.DOTTRANSPOSE
+            self.save = True
+        else:
+            self.__ungetNextChar()
+            self.currentToken = self.TokenType.DOT
+            self.curstate = self.State.DONE
+            self.save = False
+
+
 
     #def state_POWER(self,c):
     #    if c.isdigit():
@@ -304,6 +338,7 @@ class Lexer:
                             self.State.INMINUS: lambda x: self.__state_INMINUS(x),
                             self.State.ANDORLOGIC: lambda x: self.__state_ANDORLOGIC(x),
                             self.State.ORORLOGIC: lambda x: self.__state_ORORLOGIC(x),
+                            self.State.INDOT: lambda x: self.__state_INDOT(x)
                             #self.State.POWER: lambda x: self.state_POWER(x),
             }[self.curstate](c)
             if self.save and c != " ":

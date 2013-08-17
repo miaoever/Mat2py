@@ -89,6 +89,12 @@ class CodeGen:
             elif curNode.attr == "'":
                 self.__genExp(curNode.child[0])
                 self.__emitCode(".conj().T")
+            elif curNode.attr == ".'":
+                self.__genExp(curNode.child[0])
+                self.__emitCode(".T")
+            elif curNode.attr == "~":
+                self.__emitCode("not ")
+                self.__genExp(curNode.child[0])
             else:
                 self.__genExp(curNode.child[0])
                 if curNode.attr == '^':
@@ -97,6 +103,10 @@ class CodeGen:
                     self.__emitCode(" and ")
                 elif curNode.attr == "||":
                     self.__emitCode(" or ")
+                elif curNode.attr == ".*":
+                    self.__emitCode(" * ")
+                elif curNode.attr == "./":
+                    self.__emitCode(" / ")
                 else:
                     self.__emitCode(" " + curNode.attr + " ")
                 self.__genExp(curNode.child[1])
@@ -113,8 +123,9 @@ class CodeGen:
         elif curNode.subkind == self.ExpKind.ASSIGN:
             self.__genExp(curNode.child[0])
             #self.__emitCode(" = copy.deepcopy(")
-            self.__emitCode(" = ")
+            self.__emitCode(" = (")
             self.__genExp(curNode.child[1])
+            self.__emitCode(").copy()")
             #self.__emitCode(")")
 
         elif curNode.subkind == self.ExpKind.FUNC_CALL:
