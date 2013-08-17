@@ -98,6 +98,8 @@ class Parser:
     def __selection_stmt(self):
         self.__match(self.TokenType.IF)
         ifCond = self.__expression()
+        if self.token.tokenType == self.TokenType.COMMA:
+            self.__match(self.TokenType.COMMA)
         #thenStmt = self.__statement()
         thenStmt = self.__stmt_list()
 

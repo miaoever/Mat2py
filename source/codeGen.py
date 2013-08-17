@@ -93,6 +93,10 @@ class CodeGen:
                 self.__genExp(curNode.child[0])
                 if curNode.attr == '^':
                     self.__emitCode("**")
+                elif curNode.attr == "&&":
+                    self.__emitCode(" and ")
+                elif curNode.attr == "||":
+                    self.__emitCode(" or ")
                 else:
                     self.__emitCode(" " + curNode.attr + " ")
                 self.__genExp(curNode.child[1])
