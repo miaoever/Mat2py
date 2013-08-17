@@ -16,11 +16,14 @@ class Token:
                         "FUNCTION",
                         "IF",
                         "ELSE",
+                        "ELSEIF",
                         "END",
                         "FOR",
                         "WHILE",
                         "ID",
                         "RETURN",
+                        "BREAK",
+                        "CONTINUE",
                         "NUM",
                         "POW",
                         "ASSIGN",
@@ -64,11 +67,14 @@ class Token:
         ReservedWord = {
                     'if': TokenType.IF,
                     'else': TokenType.ELSE,
+                    'elseif': TokenType.ELSEIF,
                     'end': TokenType.END,
                     'function': TokenType.FUNCTION,
                     'for': TokenType.FOR,
                     'while':TokenType.WHILE,
-                    'return':TokenType.RETURN
+                    'return':TokenType.RETURN,
+                    'break' : TokenType.BREAK,
+                    'continue': TokenType.CONTINUE
                 }
         return ReservedWord
 

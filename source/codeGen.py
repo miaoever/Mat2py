@@ -6,7 +6,6 @@ from enum import *
 import sys
 import os
 import imp
-import pdb
 
 class CodeGen:
 
@@ -27,7 +26,6 @@ class CodeGen:
             if os.path.splitext(filename)[1].lower() == ".py":
                 self.LibFunc.append(os.path.splitext(filename)[0])
 
-
     def generate(self):
         parser = Parser(self.inPath)
         self.ast,self.FuncTable = parser.parse()
@@ -40,7 +38,7 @@ class CodeGen:
         self.__emitCode("import numpy as np\n")
         self.__emitCode("import copy\n")
         self.__emitCode("import os\n")
-        self.__emitCode("import sys\n")
+        self.__emitCode("import sys\n\n")
 
     def __emitIncident(self):
         if not self.outPath:
@@ -128,6 +126,12 @@ class CodeGen:
             self.__emitCode(").copy()")
             #self.__emitCode(")")
 
+        elif curNode.subkind == self.ExpKind.CONTINUE:
+            self.__emitCode("continue")
+
+        elif curNode.subkind == self.ExpKind.BREAK:
+            self.__emitCode("break")
+
         elif curNode.subkind == self.ExpKind.FUNC_CALL:
             if curNode.attr in self.FuncTable:
                 self.__emitCode(curNode.attr + "(")
@@ -176,26 +180,40 @@ class CodeGen:
         if curNode.subkind == self.StmtKind.IF:
             self.__emitIncident()
             self.__emitCode("if ")
+            #if condition
             self.__genExp(curNode.child[0])
             self.__emitCode(":\n")
             self.incident += 1
-            #self.__emitIncident()
+
             #Then statement
             thenStmt = curNode.child[1]
             self.__genStmt(thenStmt)
             self.__visitSibling(thenStmt,self.__genStmt)
 
-            #Else statement
-            if curNode.child[2]:
+            #elseif
+            for i in xrange(2, len(curNode.child) - 1):
+                self.incident -= 1
+                self.__emitIncident()
+                self.__emitCode("elif ")
+                elifCond = curNode.child[i]
+                self.__genExp(elifCond)
+                self.__emitCode(":\n")
+                self.incident += 1
+                self.__visitSibling(elifCond,self.__genStmt)
+                #self.incident -= 1
+
+            #else statement
+            lastChild = len(curNode.child) -1
+            if curNode.child[lastChild]:
                 self.incident -= 1
                 self.__emitIncident()
                 self.__emitCode("else:\n")
                 self.incident += 1
-                #self.__emitIncident()
-                elseStmt = curNode.child[2]
+                elseStmt = curNode.child[lastChild]
                 self.__genStmt(elseStmt)
                 self.__visitSibling(elseStmt,self.__genStmt)
             self.incident -= 1
+            self.__emitCode("\n")
 
         elif curNode.subkind == self.StmtKind.FOR:
             self.__emitIncident()
@@ -219,7 +237,6 @@ class CodeGen:
             self.incident +=1
             self.__genStmt(forStmt)
             self.__visitSibling(forStmt,self.__genStmt)
-
             self.incident -= 1
 
         elif curNode.subkind == self.StmtKind.WHILE:
@@ -235,7 +252,7 @@ class CodeGen:
 
         elif curNode.subkind == self.StmtKind.FUNC_DECLARE:
             self.__emitIncident()
-            self.__emitCode("\ndef ")
+            self.__emitCode("def ")
             func_name = curNode.attr
             self.__emitCode(func_name+"(")
 
@@ -260,7 +277,7 @@ class CodeGen:
                 self.__genExp(return_param)
                 self.__visitSibling(return_param,self.__genExp,", ")
 
-            self.__emitCode("\n")
+            self.__emitCode("\n\n")
             self.incident -= 1
 
         else:

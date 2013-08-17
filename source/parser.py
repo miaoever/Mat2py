@@ -16,7 +16,7 @@ class TreeNode:
         )
 
         __ExpKindList = Enum.enum (
-            "OP", "CONST", "ID", "STRING", "ASSIGN","RANGE", "FUNC_CALL", "VECTOR","ARGUMENT", "LIST"
+            "OP", "CONST", "ID", "STRING", "ASSIGN","RANGE", "FUNC_CALL", "VECTOR","ARGUMENT", "LIST","CONTINUE", "BREAK"
         )
 
         __DecKindList = Enum.enum (
@@ -54,7 +54,7 @@ class Parser:
     def __stmt_list(self):
         t = self.__statement()
 
-        if self.token.tokenType not in (self.TokenType.ENDFILE, self.TokenType.END, self.TokenType.ELSE):
+        if self.token.tokenType not in (self.TokenType.ENDFILE, self.TokenType.END, self.TokenType.ELSE, self.TokenType.ELSEIF):
             newNode = self.__stmt_list()
            # if ptr and newNode:
             if t:
@@ -71,7 +71,7 @@ class Parser:
             t = self.__forLoop_stmt()
         elif self.token.tokenType == self.TokenType.WHILE:
             t = self.__whileLoop_stmt()
-        elif self.token.tokenType == self.TokenType.ID or self.token.tokenType == self.TokenType.NUM or self.token.tokenType == self.TokenType.LBRACKET:
+        elif self.token.tokenType in (self.TokenType.ID, self.TokenType.NUM, self.TokenType.LBRACKET, self.TokenType.BREAK, self.TokenType.CONTINUE):
             t = self.__expression_stmt()
         elif self.token.tokenType == self.TokenType.FUNCTION:
             t = self.__func_declaration()
@@ -97,24 +97,37 @@ class Parser:
 
     def __selection_stmt(self):
         self.__match(self.TokenType.IF)
-        ifCond = self.__expression()
-        if self.token.tokenType == self.TokenType.COMMA:
-            self.__match(self.TokenType.COMMA)
-        #thenStmt = self.__statement()
-        thenStmt = self.__stmt_list()
-
-        elseStmt = None
-        if self.token.tokenType == self.TokenType.ELSE:
-            self.__match(self.TokenType.ELSE)
-            #elseStmt = self.__statement()
-            elseStmt = self.__stmt_list()
 
         t = TreeNode(
                     self.NodeKind.STMT,
                     self.StmtKind.IF
                 )
+
+        ifCond = self.__expression()
         t.child.append(ifCond)
+
+        if self.token.tokenType == self.TokenType.COMMA:
+            self.__match(self.TokenType.COMMA)
+
+        #thenStmt = self.__statement()
+        thenStmt = self.__stmt_list()
         t.child.append(thenStmt)
+
+        #elseif
+        elifCond = None
+        while self.token.tokenType == self.TokenType.ELSEIF:
+            self.__match(self.TokenType.ELSEIF)
+            elifCond = self.__expression()
+            newNode = self.__stmt_list()
+            elifCond.sibling = newNode
+            t.child.append(elifCond)
+
+        #else
+        elseStmt = None
+        if self.token.tokenType == self.TokenType.ELSE:
+            self.__match(self.TokenType.ELSE)
+            elseStmt = self.__stmt_list()
+
         t.child.append(elseStmt)
         self.__match(self.TokenType.END)
 
@@ -249,6 +262,29 @@ class Parser:
     def __expression(self):
         gotlvalue = False
         lvalue = None
+
+        if self.token.tokenType == self.TokenType.CONTINUE:
+            t = TreeNode(
+                    self.NodeKind.EXP,
+                    self.ExpKind.CONTINUE,
+                    self.token.tokenType,
+                    self.token.lineno
+                )
+            self.__match(self.TokenType.CONTINUE)
+            return t
+
+        elif self.token.tokenType == self.TokenType.BREAK:
+            t = TreeNode(
+                    self.NodeKind.EXP,
+                    self.ExpKind.BREAK,
+                    self.token.tokenType,
+                    self.token.lineno
+                )
+            self.__match(self.TokenType.BREAK)
+            return t
+
+
+
         if self.token.tokenType in (self.TokenType.ID, self.TokenType.LBRACKET,  self.TokenType.STRING):
             lvalue = self.__ident_statement(True)
             gotlvalue = True
