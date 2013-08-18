@@ -24,6 +24,8 @@ class Token:
                         "RETURN",
                         "BREAK",
                         "CONTINUE",
+                        "NARGIN",
+                        "VARARGIN",
                         "NUM",
                         "POW",
                         "ASSIGN",
@@ -39,6 +41,8 @@ class Token:
                         "RPAREN",
                         "LBRACKET",
                         "RBRACKET",
+                        "LBRACE",
+                        "RBRACE",
                         "GT",
                         "GE",
                         "LE",
@@ -74,7 +78,9 @@ class Token:
                     'while':TokenType.WHILE,
                     'return':TokenType.RETURN,
                     'break' : TokenType.BREAK,
-                    'continue': TokenType.CONTINUE
+                    'continue': TokenType.CONTINUE,
+                    'varargin': TokenType.VARARGIN,
+                    'nargin': TokenType.NARGIN
                 }
         return ReservedWord
 

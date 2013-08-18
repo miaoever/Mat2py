@@ -120,11 +120,10 @@ class CodeGen:
 
         elif curNode.subkind == self.ExpKind.ASSIGN:
             self.__genExp(curNode.child[0])
-            #self.__emitCode(" = copy.deepcopy(")
-            self.__emitCode(" = (")
+            #self.__emitCode(" = (")
+            self.__emitCode(" = ")
             self.__genExp(curNode.child[1])
-            self.__emitCode(").copy()")
-            #self.__emitCode(")")
+            #self.__emitCode(").copy()")
 
         elif curNode.subkind == self.ExpKind.CONTINUE:
             self.__emitCode("continue")
@@ -234,7 +233,7 @@ class CodeGen:
             self.__emitCode("):\n")
 
             forStmt = curNode.child[1]
-            self.incident +=1
+            self.incident += 1
             self.__genStmt(forStmt)
             self.__visitSibling(forStmt,self.__genStmt)
             self.incident -= 1

@@ -283,8 +283,6 @@ class Parser:
             self.__match(self.TokenType.BREAK)
             return t
 
-
-
         if self.token.tokenType in (self.TokenType.ID, self.TokenType.LBRACKET,  self.TokenType.STRING):
             lvalue = self.__ident_statement(True)
             gotlvalue = True
