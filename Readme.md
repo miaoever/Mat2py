@@ -8,7 +8,7 @@ Notice: mat2py project is in a very early version, so any feedback is expecting 
 
 ####Latest release: 0.1 (2013/08/19)
 
-<br><br>
+<br>
 #Features
 * Various methods for constructing matrix / vector
 * Function / script (or combinded in one) file(s)
