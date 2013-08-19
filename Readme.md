@@ -17,10 +17,10 @@ Notice: mat2py project is in a very early version, so any feedback is expecting 
 * Assignments
 * If statements
 * Loop statement ( for / while )
-* Plugin architecture for loading standard lib function dynamicly
+* Plugin architecture for loading standard lib function dynamically
 
 #Usage
-    # python ma2py.py source [target]
+    # python mat2py.py source [target]
 * source - the .m file you want to translate.
 * \[target\](option) - the output file name , if you don't specify it, the target code will print out on the screen directly. 
 
