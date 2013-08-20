@@ -1,7 +1,7 @@
 #Mat2py 
 
 
-Mat2py is short for Matlab to Python - a complier designed for translating matlab script into the code which may run in Python environment directly without any modification. 
+Mat2py is short for Matlab to Python - a complier designed for translating Matlab script into the code which may run in Python environment directly without any modification. 
 <p>Now, it's consist of three main components:the lexer and parser for matlab script language, the code generator which generate corresponding python code. You may use some of these parts in your own project independently under the license.</p>
 
 Notice: mat2py project is in a very early version, so any feedback is expecting :)
@@ -22,7 +22,7 @@ Notice: mat2py project is in a very early version, so any feedback is expecting 
 #Usage
     # python mat2py.py source [target]
 * source - the .m file you want to translate.
-* \[target\](option) - the output file name , if you don't specify it, the target code will print out on the screen directly. 
+* \[target\](optional) - the output file name , if you don't specify it, the target code will print out on the screen directly. 
 
 #Requirement
 * Python 2.7+

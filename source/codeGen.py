@@ -55,10 +55,15 @@ class CodeGen:
             self.out.write(content)
 
     #decrease 1 for number in string
-    def __strDec(self,string):
-        return str(int(string) - 1)
+    def __strDec(self,Node):
+        if Node.subkind ==  self.ExpKind.CONST:
+            return str(int(Node.attr) - 1)
+        else:
+            return Node.attr + " - 1"
 
     def __visitSibling(self,head,op,split=""):
+            if not head:
+                return None
             sibling = head.sibling
             while sibling:
                 self.__emitCode(split)
@@ -220,7 +225,7 @@ class CodeGen:
             forCond = curNode.child[0]
             self.__genExp(forCond.child[0])
             self.__emitCode(" = xrange(")
-            forCond.child[1].attr = self.__strDec(forCond.child[1].attr)  #convert base 1 to base 0
+            forCond.child[1].attr = self.__strDec(forCond.child[1])  #convert base 1 to base 0
             self.__genExp(forCond.child[1] )
             step = forCond.child[1].sibling
             #while sibling:

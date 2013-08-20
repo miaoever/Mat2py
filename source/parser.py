@@ -104,6 +104,33 @@ class Parser:
                 )
 
         ifCond = self.__expression()
+        if self.token.tokenType in (self.TokenType.AND, self.TokenType.OR, self.TokenType.EQ, self.TokenType.UNEQ):
+            newNode = TreeNode (
+                            self.NodeKind.EXP,
+                            self.ExpKind.OP,
+                            self.token.tokenValue,
+                            self.token.lineno
+                    )
+            newNode.child.append(ifCond)
+            self.__match(self.token.tokenType)
+            newNode.child.append(self.__expression())
+            ptr = newNode
+
+            while self.token.tokenType in (self.TokenType.AND, self.TokenType.OR, self.TokenType.EQ, self.TokenType.UNEQ):
+                newNode2 = TreeNode (
+                            self.NodeKind.EXP,
+                            self.ExpKind.OP,
+                            self.token.tokenValue,
+                            self.token.lineno
+                )
+                self.__match(self.token.tokenType)
+                op1 = self.__expression()
+                newNode2.child.append(ptr)
+                newNode2.child.append(op1)
+                ptr = newNode2
+
+            ifCond = ptr
+
         t.child.append(ifCond)
 
         if self.token.tokenType == self.TokenType.COMMA:
@@ -175,11 +202,13 @@ class Parser:
     def __loop_step(self):
         begin = self.__factor(None)
         self.__match(self.TokenType.COL)
-        temp = self.__factor(None)
+        #temp = self.__simple_expression(None)
+        temp = self.__additive_expression(None)
         if self.token.tokenType == self.TokenType.COL:
             self.__match(self.TokenType.COL)
             step = temp
-            end = self.__factor(None)
+            #end = self.__simple_expression(None)
+            end = self.__additive_expression(None)
             begin.sibling = step
             step.sibling = end
         else:
@@ -238,7 +267,8 @@ class Parser:
         arguments = self.__args()
         self.__match(self.TokenType.RPAREN)
         func_body = self.__stmt_list()
-        self.__match(self.TokenType.END)
+        if self.token.tokenType == self.TokenType.END:
+            self.__match(self.TokenType.END)
 
         t = TreeNode(
                     self.NodeKind.STMT,
@@ -310,9 +340,10 @@ class Parser:
         return t
     #handle logic operation : and or < > <= >= == ~=
     def __simple_expression(self,passdown):
-        lExpr = self.__additive_expression(passdown)
+        #lExpr = self.__additive_expression(passdown)
+        lExpr = self.__range(passdown)
 
-        if self.token.tokenType in (self.TokenType.GT, self.TokenType.LT, self.TokenType.LE, self.TokenType.GE, self.TokenType.EQ, self.TokenType.UNEQ, self.TokenType.LOGICAND, self.TokenType.LOGICOR):
+        if self.token.tokenType in (self.TokenType.GT, self.TokenType.LT, self.TokenType.LE, self.TokenType.GE, self.TokenType.EQ, self.TokenType.UNEQ, self.TokenType.LOGICAND, self.TokenType.LOGICOR , self.TokenType.AND, self.TokenType.OR):
             t = TreeNode(
                         self.NodeKind.EXP,
                         self.ExpKind.OP,
@@ -321,7 +352,8 @@ class Parser:
             )
 
             self.__match(self.token.tokenType)
-            rExpr = self.__additive_expression(None)
+            #rExpr = self.__additive_expression(None)
+            rExpr = self.__range(None)
             t.child.append(lExpr)
             t.child.append(rExpr)
         #elif self.token.tokenType in (self.TokenType.LOGICAND, self.TokenType.LOGICOR):
@@ -331,6 +363,25 @@ class Parser:
             t = lExpr
 
         return t;
+
+    #handle range exp:exp or exp:exp:exp
+    def __range(self, passdown):
+        t = self.__additive_expression(passdown)
+        if self.token.tokenType == self.TokenType.COL:
+            newNode = TreeNode(
+                        self.NodeKind.EXP,
+                        self.ExpKind.FUNC_CALL,
+                        "arange",
+                        self.token.lineno
+                    )
+            newNode.child.append(t)
+            t = newNode
+            self.__match(self.TokenType.COL)
+            t.child.append(self.__additive_expression(None))
+            if self.token.tokenType == self.TokenType.COL:
+                self.__match(self.TokenType.COL)
+                t.child.append(self.__additive_expression(None))
+        return t
 
     def __additive_expression(self,passdown):
         t = self.__term(passdown)
@@ -400,6 +451,7 @@ class Parser:
 
         return t
 
+
     #handle logic not: ~ID
     def __not(self,passdown):
         if self.token.tokenType == self.TokenType.LOGICNOT:
@@ -416,7 +468,7 @@ class Parser:
 
         return t
 
-    #factor -> (expression) | identifier | NUM | [Matric] | STRING
+    #factor -> (expression) | identifier | NUM | [Matrix] | STRING
     def __factor(self,passdown):
         if passdown:
             return passdown
@@ -552,9 +604,11 @@ class Parser:
             t = t2
 
         return t
+    
 
     def __col(self, isVector = False, isFirstCall = True):
-        newNode = self.__simple_expression(None)
+        #newNode = self.__simple_expression(None)
+        newNode = self.__additive_expression(None)
         # [mat_range:mat_range]
         if self.token.tokenType == self.TokenType.COL:
             self.__match(self.TokenType.COL)
@@ -565,7 +619,9 @@ class Parser:
                         self.token.lineno
             )
             t.child.append(newNode)
-            t.child.append(self.__simple_expression(None))
+            #t.child.append(self.__simple_expression(None))
+            t.child.append(self.__additive_expression(None))
+            #t.child.append(self.__col(None))
         #[mat_range,mat_range]
         else:
             t = newNode
