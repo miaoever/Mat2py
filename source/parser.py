@@ -612,16 +612,31 @@ class Parser:
         # [mat_range:mat_range]
         if self.token.tokenType == self.TokenType.COL:
             self.__match(self.TokenType.COL)
-            t = TreeNode(
-                        self.NodeKind.EXP,
-                        self.ExpKind.RANGE,
-                        self.token.tokenType,
-                        self.token.lineno
-            )
-            t.child.append(newNode)
-            #t.child.append(self.__simple_expression(None))
-            t.child.append(self.__additive_expression(None))
-            #t.child.append(self.__col(None))
+            newNode2 = self.__additive_expression(None)
+
+            if isVector:
+                t = TreeNode(
+                            self.NodeKind.EXP,
+                            self.ExpKind.FUNC_CALL,
+                            "arange",
+                            self.token.lineno
+                    )
+                t.child.append(newNode)
+                t.child.append(newNode2)
+
+                if self.token.tokenType == self.TokenType.COL:
+                    self.__match(self.TokenType.COL)
+                    t.child.append(self.__additive_expression(None))
+            else:
+                t = TreeNode(
+                            self.NodeKind.EXP,
+                            self.ExpKind.RANGE,
+                            self.token.tokenType,
+                            self.token.lineno
+                )
+                t.child.append(newNode)
+                #t.child.append(self.__simple_expression(None))
+                t.child.append(newNode2)
         #[mat_range,mat_range]
         else:
             t = newNode
