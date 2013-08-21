@@ -68,7 +68,7 @@ class Lexer:
                     #'=': self.TokenType.ASSIGN,
                     #'<': self.TokenType.LT,
                     #'>': self.TokenType.GT,
-                    #"'": self.TokenType.SQUOTE
+                    "@": self.TokenType.AT,
                     '{': self.TokenType.LBRACE,
                     '}': self.TokenType.RBRACE,
                     ',': self.TokenType.COMMA,

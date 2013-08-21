@@ -53,6 +53,7 @@ class Token:
                         "STRING",
                         "AND",
                         "OR",
+                        "AT",
                         "LOGICAND",
                         "LOGICOR",
                         "LOGICNOT",

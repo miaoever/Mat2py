@@ -71,7 +71,7 @@ class Parser:
             t = self.__forLoop_stmt()
         elif self.token.tokenType == self.TokenType.WHILE:
             t = self.__whileLoop_stmt()
-        elif self.token.tokenType in (self.TokenType.ID, self.TokenType.NUM, self.TokenType.LBRACKET, self.TokenType.BREAK, self.TokenType.CONTINUE):
+        elif self.token.tokenType in (self.TokenType.ID, self.TokenType.NUM, self.TokenType.LBRACKET, self.TokenType.BREAK, self.TokenType.CONTINUE,self.TokenType.SEMI):
             t = self.__expression_stmt()
         elif self.token.tokenType == self.TokenType.FUNCTION:
             t = self.__func_declaration()
@@ -97,6 +97,8 @@ class Parser:
 
     def __selection_stmt(self):
         self.__match(self.TokenType.IF)
+        if self.token.tokenType  == self.TokenType.LPAREN:
+            self.__match(self.TokenType.LPAREN)
 
         t = TreeNode(
                     self.NodeKind.STMT,
@@ -132,6 +134,9 @@ class Parser:
             ifCond = ptr
 
         t.child.append(ifCond)
+
+        if self.token.tokenType == self.TokenType.RPAREN:
+            self.__match(self.TokenType.RPAREN)
 
         if self.token.tokenType == self.TokenType.COMMA:
             self.__match(self.TokenType.COMMA)
@@ -200,21 +205,22 @@ class Parser:
 
     # begin:step:end
     def __loop_step(self):
-        begin = self.__factor(None)
-        self.__match(self.TokenType.COL)
-        #temp = self.__simple_expression(None)
-        temp = self.__additive_expression(None)
+        begin = self.__additive_expression(None)
         if self.token.tokenType == self.TokenType.COL:
             self.__match(self.TokenType.COL)
-            step = temp
-            #end = self.__simple_expression(None)
-            end = self.__additive_expression(None)
-            begin.sibling = step
-            step.sibling = end
-        else:
-            step = None
-            end = temp
-            begin.sibling = end
+            #temp = self.__simple_expression(None)
+            temp = self.__additive_expression(None)
+            if self.token.tokenType == self.TokenType.COL:
+                self.__match(self.TokenType.COL)
+                step = temp
+                #end = self.__simple_expression(None)
+                end = self.__additive_expression(None)
+                begin.sibling = step
+                step.sibling = end
+            else:
+                step = None
+                end = temp
+                begin.sibling = end
 
         t = begin
         return t
@@ -604,7 +610,7 @@ class Parser:
             t = t2
 
         return t
-    
+
 
     def __col(self, isVector = False, isFirstCall = True):
         #newNode = self.__simple_expression(None)
@@ -637,17 +643,17 @@ class Parser:
                 t.child.append(newNode)
                 #t.child.append(self.__simple_expression(None))
                 t.child.append(newNode2)
-        #[mat_range,mat_range]
         else:
             t = newNode
-
-        if self.token.tokenType == self.TokenType.COMMA:
+        #[col,col] or [col col]
+        if self.token.tokenType not in (self.TokenType.SEMI,self.TokenType.RBRACKET,self.TokenType.RPAREN, self.TokenType.DOT):
             isHstack = True
         else:
             isHstack = False
 
-        if self.token.tokenType == self.TokenType.COMMA:
-            self.__match(self.TokenType.COMMA)
+        if self.token.tokenType not in (self.TokenType.SEMI,self.TokenType.RBRACKET,self.TokenType.RPAREN, self.TokenType.DOT):
+            if self.token.tokenType == self.TokenType.COMMA:
+                self.__match(self.TokenType.COMMA)
             newNode2 = self.__col(isVector, False)
             if t:
                 if newNode2:

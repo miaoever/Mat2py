@@ -224,18 +224,24 @@ class CodeGen:
             self.__emitCode("for ")
             forCond = curNode.child[0]
             self.__genExp(forCond.child[0])
-            self.__emitCode(" = xrange(")
-            forCond.child[1].attr = self.__strDec(forCond.child[1])  #convert base 1 to base 0
-            self.__genExp(forCond.child[1] )
-            step = forCond.child[1].sibling
-            #while sibling:
-            self.__emitCode(",")
-            self.__genExp(step)
-            if step.sibling:
+
+            if forCond.child[1].sibling:
+                self.__emitCode(" = xrange(")
+                forCond.child[1].attr = self.__strDec(forCond.child[1])  #convert base 1 to base 0
+                self.__genExp(forCond.child[1] )
+                step = forCond.child[1].sibling
+                #while sibling:
                 self.__emitCode(",")
-                end = step.sibling
-                self.__genExp(end)
-            self.__emitCode("):\n")
+                self.__genExp(step)
+                if step.sibling:
+                    self.__emitCode(",")
+                    end = step.sibling
+                    self.__genExp(end)
+                self.__emitCode("):\n")
+            else:
+                self.__emitCode(" = ")
+                self.__genExp(forCond.child[1] )
+                self.__emitCode(":\n")
 
             forStmt = curNode.child[1]
             self.incident += 1
