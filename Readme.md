@@ -6,13 +6,13 @@ Mat2py is short for Matlab to Python - a complier designed for translating Matla
 
 Notice: mat2py project is in a very early version, so any feedback is expecting :)
 
-####Latest release: 0.1 (2013/08/19)
+####Latest release: 0.1 (2013/08/23)
 
 <br>
 #Features
 * Various methods for constructing matrix / vector
 * Function / script (or combinded in one) file(s)
-* Function declaration or call
+* Function declaration or call（support Variable-length input argument list）
 * Expressions
 * Assignments
 * If statements
