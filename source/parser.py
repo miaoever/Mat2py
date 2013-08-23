@@ -474,12 +474,12 @@ class Parser:
 
         return t
 
-    #factor -> (expression) | identifier | NUM | [Matrix] | STRING
+    #factor -> (expression) | identifier | NUM | [Matrix] | {cell} |STRING
     def __factor(self,passdown):
         if passdown:
             return passdown
 
-        if self.token.tokenType == self.TokenType.ID or self.token.tokenType == self.TokenType.LBRACKET:
+        if self.token.tokenType in (self.TokenType.ID, self.TokenType.LBRACKET, self.TokenType.LBRACE):
             t = self.__ident_statement()
         elif self.token.tokenType == self.TokenType.LPAREN:
             self.__match(self.TokenType.LPAREN)
@@ -513,12 +513,15 @@ class Parser:
         if  self.token.tokenType == self.TokenType.ID:
             identifier = self.token.tokenValue
             self.__match(self.TokenType.ID)
-             #function call ------- ID(arguments)
-            if  self.token.tokenType == self.TokenType.LPAREN:
-                self.__match(self.TokenType.LPAREN)
-                #arguments = self.__args()
+             #function call  or matrix - ID(arguments) / cell:ID - {arguments} 
+            if  self.token.tokenType in (self.TokenType.LPAREN, self.TokenType.LBRACE):
+                l = self.token.tokenType
+                self.__match(self.token.tokenType)
                 arguments = self.__col()
-                self.__match(self.TokenType.RPAREN)
+                if l == self.TokenType.LPAREN:
+                    self.__match(self.TokenType.RPAREN)
+                else:
+                    self.__match(self.TokenType.RBRACE)
 
                 t = TreeNode(
                             self.NodeKind.EXP,
@@ -570,6 +573,10 @@ class Parser:
 
     def __arg_list(self):
         t = self.__expression()
+        #handle variable number of arguments
+        if t.attr == "varargin":
+            t.attr = "*args"
+
         while self.token.tokenType == self.TokenType.COMMA:
             self.__match(self.TokenType.COMMA)
             newNode = self.__args()
@@ -646,12 +653,12 @@ class Parser:
         else:
             t = newNode
         #[col,col] or [col col]
-        if self.token.tokenType not in (self.TokenType.SEMI,self.TokenType.RBRACKET,self.TokenType.RPAREN, self.TokenType.DOT):
+        if self.token.tokenType not in (self.TokenType.SEMI,self.TokenType.RBRACKET,self.TokenType.RPAREN, self.TokenType.RBRACE, self.TokenType.DOT):
             isHstack = True
         else:
             isHstack = False
 
-        if self.token.tokenType not in (self.TokenType.SEMI,self.TokenType.RBRACKET,self.TokenType.RPAREN, self.TokenType.DOT):
+        if self.token.tokenType not in (self.TokenType.SEMI,self.TokenType.RBRACKET,self.TokenType.RPAREN, self.TokenType.RBRACE, self.TokenType.DOT):
             if self.token.tokenType == self.TokenType.COMMA:
                 self.__match(self.TokenType.COMMA)
             newNode2 = self.__col(isVector, False)

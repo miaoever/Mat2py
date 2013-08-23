@@ -80,8 +80,8 @@ class Token:
                     'return':TokenType.RETURN,
                     'break' : TokenType.BREAK,
                     'continue': TokenType.CONTINUE,
-                    'varargin': TokenType.VARARGIN,
-                    'nargin': TokenType.NARGIN
+                    #'varargin': TokenType.VARARGIN,
+                    #'nargin': TokenType.NARGIN
                 }
         return ReservedWord
 

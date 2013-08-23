@@ -118,6 +118,9 @@ class CodeGen:
             self.__emitCode(curNode.attr)
 
         elif curNode.subkind == self.ExpKind.ID:
+            if curNode.attr == "nargin":
+                #  use 'sys._getframe().func_code.co_argcount' to get the number of arguments for current function(exclude *args)
+                curNode.attr = "(len(args) + sys._getframe().func_code.co_argcount)"
             self.__emitCode(curNode.attr)
 
         elif curNode.subkind == self.ExpKind.STRING:
@@ -155,7 +158,10 @@ class CodeGen:
                 #except:
                 #    print "\n>> Error to load lib function : " + lib_func_name + "() <<\n"
             else:
-                self.__emitCode(curNode.attr + "[")
+                if   curNode.attr == "varargin":
+                    self.__emitCode("args" + "[")
+                else:
+                    self.__emitCode(curNode.attr + "[")
                 col = curNode.child[0]
                 self.__genExp(col)
 
